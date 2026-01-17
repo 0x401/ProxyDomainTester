@@ -1,0 +1,138 @@
+{
+  "appName": {
+    "message": "代理域名测试工具"
+  },
+  "appDescription": {
+    "message": "测试网页关联域名在有无代理情况下的连通性和耗时。"
+  },
+  "popupTitle": {
+    "message": "代理测试结果"
+  },
+  "startTestBtn": {
+    "message": "开始测试"
+  },
+  "stopTestBtn": {
+    "message": "停止测试"
+  },
+  "testCurrentPage": {
+    "message": "测试当前页面"
+  },
+  "emptyStateStart": {
+    "message": "点击上方按钮开始测试"
+  },
+  "emptyStateNoResults": {
+    "message": "暂无结果。请加载页面以触发测试。"
+  },
+  "emptyStateCompleted": {
+    "message": "状态：已完成，没有可测试的域名。"
+  },
+  "statusTesting": {
+    "message": "测试中..."
+  },
+  "statusCompleted": {
+    "message": "已完成"
+  },
+  "statusError": {
+    "message": "测试出错"
+  },
+  "statusWait": {
+    "message": "等待"
+  },
+  "statusTimeout": {
+    "message": "超时"
+  },
+  "statusErrorShort": {
+    "message": "错误"
+  },
+  "colDomain": {
+    "message": "域名"
+  },
+  "colStatus": {
+    "message": "状态"
+  },
+  "colTime": {
+    "message": "耗时(ms)"
+  },
+  "colSize": {
+    "message": "大小(Kb)"
+  },
+  "colSpeed": {
+    "message": "速度(Kb/s)"
+  },
+  "optionsTitle": {
+    "message": "测试设置"
+  },
+  "optProxyLabel": {
+    "message": "代理地址"
+  },
+  "optProxyPlaceholder": {
+    "message": "例如：127.0.0.1:7890 或 proxy.example.com:8080"
+  },
+  "optProxyHint": {
+    "message": "格式：IP:端口 或 host:端口"
+  },
+  "optTimeoutLabel": {
+    "message": "请求超时时长 (ms)"
+  },
+  "optTimeoutPlaceholder": {
+    "message": "例如：5000"
+  },
+  "optTimeoutHint": {
+    "message": "页面加载的最长等待时间"
+  },
+  "optCollectLabel": {
+    "message": "测试采集时长 (ms)"
+  },
+  "optCollectPlaceholder": {
+    "message": "例如：2000"
+  },
+  "optCollectHint": {
+    "message": "页面加载完成后，继续收集请求的时间"
+  },
+  "optCacheLabel": {
+    "message": "测试请求禁用缓存"
+  },
+  "optCacheHint": {
+    "message": "禁用缓存结果更准确，但加载可能变慢"
+  },
+  "optLogTitle": {
+    "message": "测试日志"
+  },
+  "optLogPlaceholder": {
+    "message": "暂无日志..."
+  },
+  "optLogHint": {
+    "message": "显示最近触发测试的页面 URL"
+  },
+  "loadingPage": {
+    "message": "加载页面"
+  },
+  "testing": {
+    "message": "测试中"
+  },
+  "testComplete": {
+    "message": "测试完成"
+  },
+  "pageLabel": {
+    "message": "页面: $PAGE$",
+    "placeholders": {
+      "page": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusLabel": {
+    "message": "状态: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "noResultsYet": {
+    "message": "暂无结果。"
+  },
+  "configureProxyHint": {
+    "message": "请先在选项页配置代理地址。"
+  }
+}

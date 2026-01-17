@@ -1,0 +1,138 @@
+{
+  "appName": {
+    "message": "Proxy Domain Tester"
+  },
+  "appDescription": {
+    "message": "Tests accessibility and timing of secondary domains with and without proxy."
+  },
+  "popupTitle": {
+    "message": "Proxy Test Results"
+  },
+  "startTestBtn": {
+    "message": "Start Test"
+  },
+  "stopTestBtn": {
+    "message": "Stop Test"
+  },
+  "testCurrentPage": {
+    "message": "Test Current Page"
+  },
+  "emptyStateStart": {
+    "message": "Click button above to start testing"
+  },
+  "emptyStateNoResults": {
+    "message": "No results available. Load a page to trigger tests."
+  },
+  "emptyStateCompleted": {
+    "message": "Status: Completed, no domains to test."
+  },
+  "statusTesting": {
+    "message": "Testing..."
+  },
+  "statusCompleted": {
+    "message": "Completed"
+  },
+  "statusError": {
+    "message": "Error during test"
+  },
+  "statusWait": {
+    "message": "Wait"
+  },
+  "statusTimeout": {
+    "message": "Timeout"
+  },
+  "statusErrorShort": {
+    "message": "Error"
+  },
+  "colDomain": {
+    "message": "Domain"
+  },
+  "colStatus": {
+    "message": "Status"
+  },
+  "colTime": {
+    "message": "Time(ms)"
+  },
+  "colSize": {
+    "message": "Size(Kb)"
+  },
+  "colSpeed": {
+    "message": "Speed(Kb/s)"
+  },
+  "optionsTitle": {
+    "message": "Proxy Test Settings"
+  },
+  "optProxyLabel": {
+    "message": "Proxy Address"
+  },
+  "optProxyPlaceholder": {
+    "message": "e.g., 127.0.0.1:7890 or proxy.example.com:8080"
+  },
+  "optProxyHint": {
+    "message": "Format: IP:Port or host:Port"
+  },
+  "optTimeoutLabel": {
+    "message": "Request Timeout (ms)"
+  },
+  "optTimeoutPlaceholder": {
+    "message": "e.g., 5000"
+  },
+  "optTimeoutHint": {
+    "message": "Max wait time for page load"
+  },
+  "optCollectLabel": {
+    "message": "Collection Duration (ms)"
+  },
+  "optCollectPlaceholder": {
+    "message": "e.g., 2000"
+  },
+  "optCollectHint": {
+    "message": "Time to continue collecting requests after page load"
+  },
+  "optCacheLabel": {
+    "message": "Disable Cache"
+  },
+  "optCacheHint": {
+    "message": "Disabling cache gives more accurate results but may be slower"
+  },
+  "optLogTitle": {
+    "message": "Test Log"
+  },
+  "optLogPlaceholder": {
+    "message": "No logs yet..."
+  },
+  "optLogHint": {
+    "message": "Shows the URL of the most recently tested page"
+  },
+  "loadingPage": {
+    "message": "Loading Page"
+  },
+  "testing": {
+    "message": "Testing"
+  },
+  "testComplete": {
+    "message": "Test Complete"
+  },
+  "pageLabel": {
+    "message": "Page: $PAGE$",
+    "placeholders": {
+      "page": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusLabel": {
+    "message": "Status: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "noResultsYet": {
+    "message": "No results yet."
+  },
+  "configureProxyHint": {
+    "message": "Please configure proxy address first."
+  }
+}

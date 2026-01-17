@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Proxy Test Settings</title>
+        <style>
+            :root {
+                --primary-color: #2196f3;
+                --text-color: #333;
+                --bg-color: #f5f7fa;
+                --card-bg: #ffffff;
+                --border-color: #e0e0e0;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    "Helvetica Neue", Arial, sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                justify-content: center;
+                min-height: 100vh;
+                box-sizing: border-box;
+            }
+
+            .container {
+                background-color: var(--card-bg);
+                width: 100%;
+                max-width: 600px;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            }
+
+            h2 {
+                margin-top: 0;
+                margin-bottom: 25px;
+                color: var(--text-color);
+                font-size: 24px;
+                font-weight: 600;
+                border-bottom: 2px solid var(--primary-color);
+                padding-bottom: 10px;
+                display: inline-block;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 500;
+                color: #555;
+            }
+
+            .checkbox-label {
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+            }
+
+            .checkbox-label input {
+                margin-right: 10px;
+                width: 18px;
+                height: 18px;
+                accent-color: var(--primary-color);
+            }
+
+            input[type="text"],
+            textarea {
+                width: 100%;
+                padding: 10px 12px;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                font-size: 14px;
+                transition: border-color 0.2s;
+                box-sizing: border-box;
+                font-family: inherit;
+            }
+
+            input[type="text"]:focus,
+            textarea:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+            }
+
+            textarea {
+                resize: vertical;
+                min-height: 100px;
+                color: #666;
+                font-family: monospace;
+            }
+
+            .hint {
+                font-size: 12px;
+                color: #888;
+                margin-top: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2 data-i18n="optionsTitle">测试设置</h2>
+
+            <div class="form-group">
+                <label for="proxyString" data-i18n="optProxyLabel">代理地址</label>
+                <input
+                    type="text"
+                    id="proxyString"
+                    data-i18n-placeholder="optProxyPlaceholder"
+                    placeholder="例如：127.0.0.1:7890 或 proxy.example.com:8080"
+                />
+                <div class="hint" data-i18n="optProxyHint">格式：IP:端口 或 host:端口</div>
+            </div>
+
+            <div class="form-group">
+                <label for="timeoutMs" data-i18n="optTimeoutLabel">请求超时时长 (ms)</label>
+                <input
+                    type="text"
+                    id="timeoutMs"
+                    data-i18n-placeholder="optTimeoutPlaceholder"
+                    placeholder="例如：5000"
+                />
+                <div class="hint" data-i18n="optTimeoutHint">页面加载的最长等待时间</div>
+            </div>
+
+            <div class="form-group">
+                <label for="proxyCollectMs" data-i18n="optCollectLabel">测试采集时长 (ms)</label>
+                <input
+                    type="text"
+                    id="proxyCollectMs"
+                    data-i18n-placeholder="optCollectPlaceholder"
+                    placeholder="例如：2000"
+                />
+                <div class="hint" data-i18n="optCollectHint">页面加载完成后，继续收集请求的时间</div>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="disableCache" />
+                    <span data-i18n="optCacheLabel">测试请求禁用缓存</span>
+                </label>
+                <div class="hint" style="margin-left: 28px;" data-i18n="optCacheHint">
+                    禁用缓存结果更准确，但加载可能变慢
+                </div>
+            </div>
+        </div>
+
+        <script src="options.js"></script>
+    </body>
+</html>
