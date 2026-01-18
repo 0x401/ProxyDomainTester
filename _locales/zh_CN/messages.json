@@ -32,8 +32,8 @@
   "statusCompleted": {
     "message": "已完成"
   },
-  "statusError": {
-    "message": "测试出错"
+  "unsupported": {
+    "message": "不支持的页面"
   },
   "statusWait": {
     "message": "等待"

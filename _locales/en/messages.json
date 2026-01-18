@@ -32,8 +32,8 @@
   "statusCompleted": {
     "message": "Completed"
   },
-  "statusError": {
-    "message": "Error during test"
+  "unsupported": {
+    "message": "Unsupported page"
   },
   "statusWait": {
     "message": "Wait"

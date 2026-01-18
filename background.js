@@ -1,17 +1,17 @@
 const DEFAULT_CONFIG = {
-  proxyString: "127.0.0.1:7890",
+  proxyString: "",
   timeoutMs: 5000,
   proxyCollectMs: 3000,
+  disableCache: true,
 };
 
 let currentConfig = { ...DEFAULT_CONFIG };
 let isTesting = false;
 
 const requestStartById = {};
-const proxyRequestsByTab = {};
-const navigationStartByTab = {};
-const proxyCollectStopTimeByTab = {};
-const domainsSeenByTab = {};
+const domainResultsByTab = {}; // Map<tabId, Map<domain, result>>
+let currentCollectStopTime = 0;
+let currentTestTabId = null;
 
 function getDirectPAC(pageUrl) {
   let host = "";
@@ -44,6 +44,9 @@ function getDirectPAC(pageUrl) {
 chrome.storage.sync.get("proxyConfig", (data) => {
   if (data.proxyConfig) {
     currentConfig = { ...DEFAULT_CONFIG, ...data.proxyConfig };
+  } else {
+    // If no config found, save default immediately
+    chrome.storage.sync.set({ proxyConfig: DEFAULT_CONFIG });
   }
   syncCacheDynamicRules();
 });
@@ -59,9 +62,7 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
   if (details.frameId !== 0) {
     return;
   }
-  navigationStartByTab[details.tabId] = details.timeStamp;
-  proxyRequestsByTab[details.tabId] = [];
-  domainsSeenByTab[details.tabId] = {};
+  domainResultsByTab[details.tabId] = {};
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -135,12 +136,7 @@ chrome.webRequest.onBeforeRequest.addListener(
       return;
     }
 
-    const navStart = navigationStartByTab[details.tabId];
-    if (typeof navStart === "number" && details.timeStamp < navStart) {
-      return;
-    }
-
-    if (details.method && details.method !== "GET") {
+    if (currentCollectStopTime > 0 && details.timeStamp > currentCollectStopTime) {
       return;
     }
 
@@ -155,13 +151,15 @@ chrome.webRequest.onBeforeRequest.addListener(
     } catch (e) {}
 
     if (domain) {
-      if (!domainsSeenByTab[details.tabId]) {
-        domainsSeenByTab[details.tabId] = {};
+      if (!domainResultsByTab[details.tabId]) {
+        domainResultsByTab[details.tabId] = {};
       }
-      if (domainsSeenByTab[details.tabId][domain]) {
-        return;
+      if (!domainResultsByTab[details.tabId][domain]) {
+        domainResultsByTab[details.tabId][domain] = {
+          url: details.url,
+          status: "pending",
+        };
       }
-      domainsSeenByTab[details.tabId][domain] = true;
     }
 
     requestStartById[details.requestId] = {
@@ -241,15 +239,13 @@ function handleRequestFinished(details) {
 
   const tabId = startInfo.tabId;
   const url = startInfo.url;
-  const startTime = startInfo.startTime;
 
-  const startNav = navigationStartByTab[tabId];
-  if (typeof startNav === "number" && startTime < startNav) {
+  if (currentCollectStopTime > 0 && details.timeStamp > currentCollectStopTime) {
     return;
   }
 
-  if (!proxyRequestsByTab[tabId]) {
-    proxyRequestsByTab[tabId] = [];
+  if (!domainResultsByTab[tabId]) {
+    domainResultsByTab[tabId] = {};
   }
 
   let status;
@@ -264,26 +260,31 @@ function handleRequestFinished(details) {
 
   let sizeBytes = null;
   if (hasStatusCode && Array.isArray(details.responseHeaders)) {
-    for (let i = 0; i < details.responseHeaders.length; i++) {
-      const h = details.responseHeaders[i];
-      if (!h || !h.name) continue;
-      if (String(h.name).toLowerCase() === "content-length") {
-        const v = parseInt(h.value, 10);
-        if (Number.isFinite(v) && v > 0) {
-          sizeBytes = v;
-          break;
-        }
+    const header = details.responseHeaders.find(
+      (h) => h.name && h.name.toLowerCase() === "content-length",
+    );
+    if (header) {
+      const v = parseInt(header.value, 10);
+      if (Number.isFinite(v) && v > 0) {
+        sizeBytes = v;
       }
     }
   }
 
-  proxyRequestsByTab[tabId].push({
-    url,
-    startTime,
-    endTime: details.timeStamp,
-    status,
-    sizeBytes,
-  });
+  let domain = null;
+  try {
+    const urlObj = new URL(url);
+    domain = urlObj.hostname;
+  } catch (e) {}
+
+  if (domain && domainResultsByTab[tabId][domain]) {
+    const entry = domainResultsByTab[tabId][domain];
+    // Update existing entry (which was 'pending')
+    entry.status = status;
+    if (typeof sizeBytes === "number" && sizeBytes > 0) {
+      entry.size = sizeBytes;
+    }
+  }
 }
 
 chrome.webRequest.onCompleted.addListener(
@@ -313,10 +314,12 @@ async function runPhase(pageUrl) {
   chrome.proxy.settings.set({ value: config, scope: "regular" });
 
   let phaseTabId = null;
-
+  currentCollectStopTime = 0; // Reset
+  
   await new Promise((resolve) => {
     chrome.tabs.create({ url: pageUrl, active: false }, (tab) => {
       phaseTabId = tab && tab.id;
+      currentTestTabId = phaseTabId;
       resolve();
     });
   });
@@ -394,25 +397,26 @@ async function runPhase(pageUrl) {
         progress: { phase: "collecting", startedAt: Date.now() },
       });
       const endWait = Date.now() + collectMs;
+      console.log(`[ProxyTest] Phase completed. Waiting ${collectMs}ms for collection...`);
       while (Date.now() < endWait) {
         if (!isTesting) break;
         await new Promise((r) => setTimeout(r, 200));
       }
+      console.log("[ProxyTest] Collection wait finished.");
     }
     
     // 记录结束时间，用于过滤请求
-    proxyCollectStopTimeByTab[phaseTabId] = Date.now();
+    currentCollectStopTime = Date.now();
   }
 
-  const stopTime =
-    (typeof phaseTabId === "number" && proxyCollectStopTimeByTab[phaseTabId]) ||
-    undefined;
   const info =
     typeof phaseTabId === "number"
-      ? buildDomainToInfoForTab(phaseTabId, stopTime)
+      ? buildDomainToInfoForTab(phaseTabId)
       : null;
+  console.log(info)   
   if (typeof phaseTabId === "number") {
     const perfInfo = await getPerfDomainToInfo(phaseTabId);
+    console.log(perfInfo)
     if (perfInfo && info) {
       for (const d in perfInfo) {
         const perf = perfInfo[d];
@@ -452,7 +456,7 @@ async function runPhase(pageUrl) {
     try {
       chrome.tabs.remove(phaseTabId);
     } catch (e) {}
-    delete proxyCollectStopTimeByTab[phaseTabId];
+    currentTestTabId = null;
   }
 
   return info || {};
@@ -488,37 +492,22 @@ async function testDomains(pageUrl) {
   return { page: pageUrl, tests: testItems };
 }
 
-function buildDomainToInfoForTab(tabId, stopTime) {
-  const requests = proxyRequestsByTab[tabId];
-  if (!requests || !requests.length) {
+function buildDomainToInfoForTab(tabId) {
+  const resultsMap = domainResultsByTab[tabId];
+  if (!resultsMap) {
     return null;
   }
 
   const result = {};
 
-  for (let i = 0; i < requests.length; i++) {
-    const req = requests[i];
-
-    if (typeof stopTime === "number" && req.endTime > stopTime) {
-      continue;
+  // Convert Map to plain object
+  for (const domain in resultsMap) {
+    const entry = resultsMap[domain];
+    result[domain] = { ...entry };
+    // If status is still 'pending', it means timeout (because handleRequestFinished wasn't called)
+    if (result[domain].status === "pending") {
+      result[domain].status = "timeout";
     }
-
-    try {
-      const urlObj = new URL(req.url);
-      const domain = urlObj.hostname;
-
-      if (result[domain]) {
-        continue;
-      }
-
-      result[domain] = {
-        url: req.url,
-        status: req.status,
-      };
-      if (typeof req.sizeBytes === "number" && req.sizeBytes > 0) {
-        result[domain].size = req.sizeBytes;
-      }
-    } catch (error) {}
   }
 
   return result;
