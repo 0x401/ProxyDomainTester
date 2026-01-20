@@ -1,27 +1,18 @@
 # Proxy Domain Tester
 
-This is a Chrome browser extension designed to help developers and network administrators test the connectivity and loading performance of third-party domains relied upon by the current web page under specific proxy strategies.
+[中文文档](README_CN.md)
 
-By simulating real page loading processes, this extension can accurately analyze which associated domains (such as CDNs, APIs, tracking codes, etc.) are accessible in Direct mode, which ones require a proxy, and their loading duration.
+This is a Chrome browser extension designed to help developers and network administrators test the connectivity and loading performance of third-party domains relied upon by the current web page (such as CDNs, APIs, tracking codes, etc.) under specific proxy strategies.
 
-## ✨ Key Features
+## Features
 
-- **In-Depth Direct Mode Testing**
-    - **Smart PAC Strategy**: Automatically generates a PAC script during testing that routes only the current page's main domain (Host) through the user-configured proxy server, while forcing all other associated domains to go Direct.
-    - **Real Environment Simulation**: This simulates a scenario where "the main site uses a proxy, while resources go direct," helping to detect the direct availability of resources.
+After starting the test, the extension opens the current page in a new background tab and initiates network requests using the strategy: "Access the current page's domain via proxy, and access other domains on the page via direct connection." After a certain period, it collects request data and closes the background tab.
 
-- **Background Silent Testing**
-    - The testing process runs in a background tab that is not activated, created via `chrome.tabs.create`. It automatically closes upon completion, ensuring it does not interfere with the user's current browsing experience.
+As shown in the result below, when visiting the `https://www.google.com` page, the `www.gstatic.com` domain can be accessed normally via direct connection.
 
-- **Precise Performance Monitoring**
-    - Utilizes the browser's native `Performance API` to obtain accurate resource loading durations.
-    - Supports custom timeouts and collection windows to ensure data integrity.
+![Preview](preview.png)
 
-- **Modern User Interface**
-    - Clear and intuitive Popup panel displaying real-time test status (success/failure) and duration for each domain.
-    - Provides a detailed configuration options page.
-
-## 🚀 Installation Guide
+## Installation
 
 Since this extension has not been published to the Chrome Web Store, you need to install it via "Load unpacked":
 
@@ -31,7 +22,7 @@ Since this extension has not been published to the Chrome Web Store, you need to
 4. **Load Extension**: Click the "Load unpacked" button in the top left corner and select the root directory of this project.
 5. **Done**: The extension icon will appear in the browser toolbar, indicating successful installation.
 
-## 📖 Usage Instructions
+## Usage
 
 ### 1. Configure Proxy (Required for First Use)
 Before starting the test, you need to tell the extension which proxy server to use for accessing the main page:
@@ -42,41 +33,25 @@ Before starting the test, you need to tell the extension which proxy server to u
 ### 2. Start Test
 1. Open the target webpage you want to test in your browser.
 2. Click the extension icon to open the Popup panel.
-3. Click the **"Start Test"** button at the bottom.
-4. The extension will automatically analyze the domains involved and start testing in the background.
-5. The panel list will display the test results for each domain in real-time:
-    - **Domain**: The domain of the resource (clickable).
-    - **Status**: Displays loading duration (e.g., `120ms`) or error information.
-    - **Speed**: Displays the connection speed (e.g., `120KB/s`).
+3. Click the **Start Test** button.
+4. Wait for the test to complete.
 
 ### 3. Stop Test
-Click the **"Stop Test"** button at any time during the test to abort. Acquired results will be preserved.
+Click the **Stop Test** button at any time during the test to abort. Acquired results will be preserved.
 
-## ⚙️ Configuration Options
+## Settings
 
 Go to the **Options** page for detailed configuration:
 
 - **Proxy Address**:
     - Required. Format: `IP:Port` or `Domain:Port`.
-    - Function: During testing, only the main domain of the current page will be accessed via this proxy.
-- **Request Timeout (ms)**:
+- **Request Timeout**:
     - The maximum waiting time for page loading (default recommended: 5000ms).
-- **Test Collection Duration (ms)**:
+- **Test Collection Duration**:
     - The time window to continue collecting subsequent resource requests after the page load completes.
-- **Disable Cache for Test Requests**:
-    - If checked, test requests will disable browser cache, resulting in more accurate but potentially slower results.
+- **Disable Cache**:
+    - If checked, attempts to disable cache for test requests.
 
-## 🛠️ Tech Stack
-
-- **Manifest V3**: Uses the latest Chrome Extension standard.
-- **Native APIs**:
-    - `chrome.proxy` & `chrome.declarativeNetRequest`: Control network proxies.
-    - `chrome.webRequest` & `chrome.webNavigation`: Monitor network request status.
-    - `chrome.tabs`: Manage background test tabs.
-    - `Performance API`: Obtain high-precision timing data.
-- **UI**: Native HTML/CSS/JS, no third-party framework dependencies, lightweight and efficient.
-
-## ⚠️ Notes
-
-- During testing, the browser's global proxy settings will be temporarily taken over. After the test ends or stops, it will automatically restore to the system default settings (System).
+## Notes
+- During testing, the browser's proxy settings will be temporarily taken over. After the test ends, it will automatically restore to default settings.
 - Due to the complexity of page loading, the number of domains collected may be less than those directly viewable in the developer tools.
