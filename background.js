@@ -9,15 +9,17 @@ let currentConfig = { ...DEFAULT_CONFIG };
 let isTesting = false;
 
 const requestStartById = {};
-const domainResultsByTab = {}; // Map<tabId, Map<domain, result>>
+const domainResultsByTab = {};
 let currentCollectStopTime = 0;
 let currentTestTabId = null;
+let lastAppliedDisableCache = null;
 
 function getDirectPAC(pageUrl) {
   let host = "";
   try {
     host = new URL(pageUrl).hostname;
   } catch (e) {}
+  
   if (!host) {
     return {
       mode: "pac_script",
@@ -45,7 +47,6 @@ chrome.storage.sync.get("proxyConfig", (data) => {
   if (data.proxyConfig) {
     currentConfig = { ...DEFAULT_CONFIG, ...data.proxyConfig };
   } else {
-    // If no config found, save default immediately
     chrome.storage.sync.set({ proxyConfig: DEFAULT_CONFIG });
   }
   syncCacheDynamicRules();
@@ -62,13 +63,28 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
   if (details.frameId !== 0) {
     return;
   }
+  // Clear previous results for this tab if it navigates
   domainResultsByTab[details.tabId] = {};
+});
+
+// Optimization: Clean up memory when a tab is closed
+chrome.tabs.onRemoved.addListener((tabId) => {
+  if (domainResultsByTab[tabId]) {
+    delete domainResultsByTab[tabId];
+  }
+  
+  // Clean up stale request trackers for this tab
+  for (const requestId in requestStartById) {
+    if (requestStartById[requestId].tabId === tabId) {
+      delete requestStartById[requestId];
+    }
+  }
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "stopTest") {
     if (isTesting) {
-      isTesting = false; // 标记停止，testDomains 中的循环或等待应该检查此标志
+      isTesting = false;
       chrome.proxy.settings.set({
         value: { mode: "system" },
         scope: "regular",
@@ -105,7 +121,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     try {
       const results = await testDomains(pageUrl);
-      // 如果 results 返回 null，说明是手动停止，保持现有结果不覆盖为 Error
       if (results) {
         chrome.storage.local.set({
           results: { ...results, status: "done" },
@@ -179,6 +194,10 @@ function syncCacheDynamicRules() {
     return;
   }
 
+  if (lastAppliedDisableCache === currentConfig.disableCache) {
+    return;
+  }
+
   const ruleId = 1;
   const removeIds = [ruleId];
 
@@ -219,12 +238,16 @@ function syncCacheDynamicRules() {
 
     chrome.declarativeNetRequest.updateDynamicRules(
       { addRules: [rule], removeRuleIds: removeIds },
-      () => {},
+      () => {
+         lastAppliedDisableCache = true;
+      },
     );
   } else {
     chrome.declarativeNetRequest.updateDynamicRules(
       { addRules: [], removeRuleIds: removeIds },
-      () => {},
+      () => {
+        lastAppliedDisableCache = false;
+      },
     );
   }
 }
@@ -279,7 +302,6 @@ function handleRequestFinished(details) {
 
   if (domain && domainResultsByTab[tabId][domain]) {
     const entry = domainResultsByTab[tabId][domain];
-    // Update existing entry (which was 'pending')
     entry.status = status;
     if (typeof sizeBytes === "number" && sizeBytes > 0) {
       entry.size = sizeBytes;
@@ -314,7 +336,7 @@ async function runPhase(pageUrl) {
   chrome.proxy.settings.set({ value: config, scope: "regular" });
 
   let phaseTabId = null;
-  currentCollectStopTime = 0; // Reset
+  currentCollectStopTime = 0; 
   
   await new Promise((resolve) => {
     chrome.tabs.create({ url: pageUrl, active: false }, (tab) => {
@@ -368,8 +390,6 @@ async function runPhase(pageUrl) {
   });
 
   if (typeof phaseTabId === "number") {
-    // 轮询检查 isTesting 标志，或者直接等待 waitForPageLoad
-    // 这里为了支持立即中断，我们可以将 waitForPageLoad 包装一下，或者简单点在之后检查
     const status = await Promise.race([
       waitForPageLoad,
       new Promise((resolve) => {
@@ -391,7 +411,6 @@ async function runPhase(pageUrl) {
       return null;
     }
 
-    // 如果加载完成，继续等待收集时间；如果是超时或错误，直接结束（或也可以等待一小段时间以确保请求被捕获）
     if (status === "completed") {
       chrome.storage.local.set({
         progress: { phase: "collecting", startedAt: Date.now() },
@@ -405,7 +424,6 @@ async function runPhase(pageUrl) {
       console.log("[ProxyTest] Collection wait finished.");
     }
     
-    // 记录结束时间，用于过滤请求
     currentCollectStopTime = Date.now();
   }
 
@@ -500,11 +518,9 @@ function buildDomainToInfoForTab(tabId) {
 
   const result = {};
 
-  // Convert Map to plain object
   for (const domain in resultsMap) {
     const entry = resultsMap[domain];
     result[domain] = { ...entry };
-    // If status is still 'pending', it means timeout (because handleRequestFinished wasn't called)
     if (result[domain].status === "pending") {
       result[domain].status = "timeout";
     }
